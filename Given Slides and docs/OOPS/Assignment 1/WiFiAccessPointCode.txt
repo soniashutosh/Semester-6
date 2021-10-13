@@ -1,0 +1,59 @@
+
+/* Create a WiFi access point and provide a web server on it. */
+
+#include <ESP8266WiFi.h>
+#include <WiFiClient.h>
+#include <ESP8266WebServer.h>
+
+#ifndef APSSID
+#define APSSID "ESPap"
+#define APPSK  "thereisnospoon"
+#endif
+
+/* Set these to your desired credentials. */
+const char *ssid = APSSID;
+const char *password = APPSK;
+
+ESP8266WebServer server(80);
+
+/* Just a little test message.  Go to http://192.168.4.1 in a web browser
+   connected to this access point to see it.
+*/
+char HTML[] = "<html><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><body><h1>You are connected</h1><br><br><a href=\"http://192.168.4.1/onled\">onled</a><br><a href=\"http://192.168.4.1/offled\">offled</a></body></html>";
+
+void handleRoot() {
+  server.send(200, "text/html", HTML);
+}
+void onled()
+{
+   digitalWrite(D11, HIGH);
+   server.send(200, "text/html", HTML);
+}
+void offled()
+{
+  digitalWrite(D11, LOW);
+  server.send(200, "text/html", HTML);
+}
+
+void setup() {
+  delay(1000);
+  pinMode(D11, OUTPUT);
+  Serial.begin(115200);
+  Serial.println();
+  Serial.print("Configuring access point...");
+  /* You can remove the password parameter if you want the AP to be open. */
+  WiFi.softAP(ssid, password);
+
+  IPAddress myIP = WiFi.softAPIP();
+  Serial.print("AP IP address: ");
+  Serial.println(myIP);
+  server.on("/", handleRoot);
+  server.on("/offled",onled);
+  server.on("/onled",offled);
+  server.begin();
+  Serial.println("HTTP server started");
+}
+
+void loop() {
+  server.handleClient(); // Listen for HTTP requests from clients
+}
